@@ -1,0 +1,10 @@
+{
+  // Same rules as bikram-sambat-ts: prose and tables routinely exceed a fixed
+  // column count, and Devanagari combining marks break table alignment rules.
+  "config": {
+    "MD013": false,
+    "MD060": false,
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["node_modules", "dist", "LICENSE", "coverage", ".playwright-mcp"],
+}

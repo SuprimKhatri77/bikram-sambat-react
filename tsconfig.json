@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // Tests and tooling run on current Node; the library itself stays ES2020 (tsconfig.lib.json).
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["vitest/globals"]
+  },
+  "include": ["src", "tests", "playground", "*.ts"]
+}

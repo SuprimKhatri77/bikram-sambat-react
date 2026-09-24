@@ -1,0 +1,43 @@
+name: publish
+
+# Publishes with npm Trusted Publishing (OIDC): no npm token is stored.
+# Before the first release, add this repository and workflow as a trusted
+# publisher in the package's settings on npmjs.com.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+
+      # Node 24 ships npm 11, which supports trusted publishing.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Check the release tag matches package.json
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "Release tag ${GITHUB_REF_NAME} does not match package.json version v${version}" >&2
+            exit 1
+          fi
+
+      - run: bun install --frozen-lockfile
+      - run: bun run check:package
+
+      # prepublishOnly re-runs typecheck/lint/test/build/check:package.
+      - run: npm publish --access public

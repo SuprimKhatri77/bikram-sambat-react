@@ -1,0 +1,459 @@
+/*
+ * bikram-sambat-react default styles.
+ *
+ * Customize by overriding the --nc-* variables on .nc-calendar /
+ * .nc-date-picker (or any ancestor). States are exposed as data attributes
+ * (data-selected, data-today, data-disabled, data-focused) for custom CSS.
+ */
+
+.nc-calendar,
+.nc-date-picker {
+  --nc-background: #ffffff;
+  --nc-foreground: #1c1917;
+  --nc-muted: #f5f5f4;
+  --nc-muted-foreground: #78716c;
+  --nc-border: #e7e5e4;
+  --nc-primary: #b91c1c;
+  --nc-primary-foreground: #ffffff;
+  --nc-hover: #f5f5f4;
+  --nc-focus: #2563eb;
+  --nc-disabled: #a8a29e;
+  --nc-radius: 0.5rem;
+  /* Day buttons: 50% makes circles; use e.g. 0.375rem for rounded squares. */
+  --nc-day-radius: 50%;
+  --nc-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.25), 0 2px 6px -2px rgb(0 0 0 / 0.1);
+  --nc-cell-size: 2.5rem;
+  --nc-font: inherit;
+}
+
+.dark .nc-calendar,
+.dark .nc-date-picker,
+[data-theme="dark"] .nc-calendar,
+[data-theme="dark"] .nc-date-picker,
+.nc-calendar.nc-dark,
+.nc-date-picker.nc-dark {
+  --nc-background: #1c1917;
+  --nc-foreground: #f5f5f4;
+  --nc-muted: #292524;
+  --nc-muted-foreground: #a8a29e;
+  --nc-border: #3a3533;
+  --nc-primary: #f87171;
+  --nc-primary-foreground: #1c1917;
+  --nc-hover: #292524;
+  --nc-focus: #60a5fa;
+  --nc-disabled: #6b6461;
+  --nc-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.7), 0 2px 6px -2px rgb(0 0 0 / 0.5);
+}
+
+.nc-icon {
+  display: block;
+  flex: none;
+}
+
+/* Calendar */
+
+.nc-calendar {
+  display: inline-block;
+  box-sizing: border-box;
+  padding: 0.75rem;
+  color: var(--nc-foreground);
+  background: var(--nc-background);
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius);
+  font-family: var(--nc-font);
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+
+.nc-calendar *,
+.nc-date-picker * {
+  box-sizing: border-box;
+}
+
+.nc-calendar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.nc-calendar-selects {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.nc-calendar-nav,
+.nc-calendar-select {
+  height: 2rem;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: calc(var(--nc-radius) - 0.125rem);
+  font: inherit;
+  cursor: pointer;
+}
+
+.nc-calendar-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  padding: 0;
+}
+
+.nc-calendar-select {
+  padding: 0 1.25rem 0 0.375rem;
+  font-weight: 600;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23a8a29e' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.25rem center;
+  background-size: 0.875rem;
+}
+
+.nc-calendar-select option {
+  color: var(--nc-foreground);
+  background: var(--nc-background);
+}
+
+.nc-calendar-nav:hover:not(:disabled),
+.nc-calendar-select:hover {
+  background: var(--nc-hover);
+  border-color: var(--nc-border);
+}
+
+.nc-calendar-nav:disabled {
+  color: var(--nc-disabled);
+  cursor: default;
+}
+
+.nc-calendar-grid {
+  width: calc(var(--nc-cell-size) * 7);
+  table-layout: fixed;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.nc-calendar-weekday {
+  width: var(--nc-cell-size);
+  height: 2rem;
+  padding: 0;
+  color: var(--nc-muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.nc-calendar-weekday abbr {
+  text-decoration: none;
+  cursor: default;
+}
+
+/* Saturday is the weekly holiday in Nepal. */
+.nc-calendar-weekday:last-child {
+  color: var(--nc-primary);
+}
+
+.nc-calendar-cell {
+  width: var(--nc-cell-size);
+  height: var(--nc-cell-size);
+  padding: 1px;
+  text-align: center;
+}
+
+.nc-calendar-day {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--nc-day-radius);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+/* Saturday, the weekly holiday, in the accent color like Nepali wall calendars. */
+.nc-calendar-week
+  > .nc-calendar-cell:last-child
+  > .nc-calendar-day:not([data-selected]):not([data-disabled]) {
+  color: var(--nc-primary);
+}
+
+/* dayShape. "circle" uses --nc-day-radius (50% by default), so it stays overridable. */
+.nc-calendar[data-day-shape="rounded"] {
+  --nc-day-radius: calc(var(--nc-radius) - 0.125rem);
+}
+
+.nc-calendar[data-day-shape="square"] {
+  --nc-day-radius: 0;
+}
+
+/*
+ * Center digits by their ink, not their line box: fonts reserve descender
+ * space that digits don't use, which makes them look high in a circle.
+ * Latin digits are cap-height tall, Devanagari digits about x-height.
+ * Browsers without text-box support keep the normal line box.
+ */
+.nc-calendar-day-number,
+.nc-calendar-day-gregorian {
+  text-box: trim-both cap alphabetic;
+}
+
+.nc-calendar[data-numerals="devanagari"] .nc-calendar-day-number,
+.nc-calendar[data-numerals="devanagari"] .nc-calendar-day-gregorian {
+  text-box: trim-both ex alphabetic;
+}
+
+.nc-calendar-day:hover:not([data-disabled]):not([data-selected]) {
+  background: var(--nc-hover);
+}
+
+.nc-calendar-day:focus-visible,
+.nc-calendar-nav:focus-visible,
+.nc-calendar-select:focus-visible,
+.nc-date-picker-trigger:focus-visible,
+.nc-date-picker-clear:focus-visible {
+  outline: 2px solid var(--nc-focus);
+  outline-offset: 1px;
+}
+
+/* Today: a ring and a dot, so it doesn't rely on color alone. */
+.nc-calendar-day[data-today] {
+  border-color: var(--nc-primary);
+  font-weight: 600;
+}
+
+.nc-calendar-day[data-today]::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+/* With two lines of text there's no room for the dot; the ring marks today. */
+.nc-calendar[data-gregorian] .nc-calendar-day[data-today]::after {
+  display: none;
+}
+
+.nc-calendar-day[data-selected] {
+  color: var(--nc-primary-foreground);
+  background: var(--nc-primary);
+  border-color: var(--nc-primary);
+  font-weight: 700;
+}
+
+.nc-calendar-day[data-disabled] {
+  color: var(--nc-disabled);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.nc-calendar-day[data-disabled][data-selected] {
+  color: var(--nc-primary-foreground);
+  opacity: 0.6;
+}
+
+.nc-calendar-day-gregorian {
+  max-width: 100%;
+  /* Clip only sideways, so trimmed descenders (the "p" in "Sep") stay visible. */
+  overflow-x: clip;
+  margin-top: 1px;
+  color: var(--nc-muted-foreground);
+  font-size: 0.625rem;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.nc-calendar-day[data-selected] .nc-calendar-day-gregorian {
+  color: inherit;
+  opacity: 0.85;
+}
+
+/*
+ * Trimmed lines have no built-in spacing between them, so add it back.
+ * (After the base rule above, so it wins.)
+ */
+@supports (text-box: trim-both cap alphabetic) {
+  .nc-calendar-day-gregorian {
+    margin-top: 0.375rem;
+  }
+
+  /* Devanagari digits dip below the baseline and vowel signs rise above the line. */
+  .nc-calendar[data-numerals="devanagari"] .nc-calendar-day-gregorian {
+    margin-top: 0.5625rem;
+  }
+}
+
+/* Date picker */
+
+.nc-date-picker {
+  position: relative;
+  display: inline-block;
+  color: var(--nc-foreground);
+  font-family: var(--nc-font);
+  font-size: 0.875rem;
+}
+
+.nc-date-picker-field {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  height: 2.5rem;
+  padding: 0 0.25rem 0 0.75rem;
+  background: var(--nc-background);
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius);
+}
+
+.nc-date-picker-field:focus-within {
+  border-color: var(--nc-focus);
+  box-shadow: 0 0 0 1px var(--nc-focus);
+}
+
+.nc-date-picker[data-disabled] .nc-date-picker-field {
+  background: var(--nc-muted);
+  opacity: 0.7;
+}
+
+.nc-date-picker-input {
+  flex: 1;
+  width: 9rem;
+  min-width: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.nc-date-picker-input::placeholder {
+  color: var(--nc-muted-foreground);
+}
+
+.nc-date-picker-input[aria-invalid="true"] {
+  text-decoration: underline wavy var(--nc-primary);
+  text-underline-offset: 3px;
+}
+
+.nc-date-picker-field:has(.nc-date-picker-input[aria-invalid="true"]) {
+  border-color: var(--nc-primary);
+}
+
+.nc-date-picker-trigger,
+.nc-date-picker-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  color: var(--nc-muted-foreground);
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--nc-radius) - 0.125rem);
+  cursor: pointer;
+}
+
+.nc-date-picker-trigger:hover:not(:disabled),
+.nc-date-picker-clear:hover {
+  color: var(--nc-foreground);
+  background: var(--nc-hover);
+}
+
+.nc-date-picker-trigger:disabled {
+  cursor: default;
+}
+
+.nc-date-picker-popover {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  z-index: 50;
+  /* Don't shrink to the width of the (narrower) input field. */
+  width: max-content;
+}
+
+.nc-date-picker-popover[data-side="top"] {
+  top: auto;
+  bottom: calc(100% + 0.375rem);
+}
+
+.nc-date-picker-popover[data-align="end"] {
+  left: auto;
+  right: 0;
+}
+
+.nc-date-picker-popover .nc-calendar {
+  box-shadow: var(--nc-shadow);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .nc-date-picker-popover {
+    animation: nc-popover-in 140ms cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  .nc-date-picker-popover[data-side="top"] {
+    animation-name: nc-popover-in-top;
+  }
+
+  .nc-calendar-day,
+  .nc-calendar-nav,
+  .nc-date-picker-trigger {
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease;
+  }
+}
+
+@keyframes nc-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@keyframes nc-popover-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+/* Icon position: the calendar button before the input, or no button at all. */
+.nc-date-picker[data-icon-position="start"] .nc-date-picker-field {
+  padding: 0 0.75rem 0 0.25rem;
+}
+
+.nc-date-picker[data-icon-position="start"] .nc-date-picker-input {
+  padding-left: 0.25rem;
+}
+
+.nc-date-picker[data-icon-position="none"] .nc-date-picker-field {
+  padding-right: 0.75rem;
+}
+
+.nc-date-picker[data-icon-position="none"] .nc-date-picker-input {
+  cursor: pointer;
+}
+
+.nc-date-picker[data-icon-position="none"] .nc-date-picker-input:focus {
+  cursor: text;
+}

@@ -1,0 +1,92 @@
+{
+  "name": "bikram-sambat-react",
+  "version": "0.1.0",
+  "description": "Accessible React components for selecting and displaying Bikram Sambat (Nepali calendar) dates, built on bikram-sambat-ts.",
+  "keywords": [
+    "bikram-sambat",
+    "nepali-calendar",
+    "nepali-date-picker",
+    "date-picker",
+    "calendar",
+    "react",
+    "nepal",
+    "bs"
+  ],
+  "license": "MIT",
+  "author": "Suprim Khatri",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SuprimKhatri77/bikram-sambat-react.git"
+  },
+  "homepage": "https://github.com/SuprimKhatri77/bikram-sambat-react#readme",
+  "bugs": {
+    "url": "https://github.com/SuprimKhatri77/bikram-sambat-react/issues"
+  },
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite playground",
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.lib.json",
+    "lint": "eslint . && markdownlint-cli2",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:package": "publint --strict && attw --pack . --profile esm-only --exclude-entrypoints styles.css",
+    "prepublishOnly": "bun run typecheck && bun run lint && bun run test && bun run build && bun run check:package"
+  },
+  "dependencies": {
+    "bikram-sambat-ts": "^0.3.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@eslint/js": "^10.0.1",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/coverage-v8": "^5.0.1",
+    "axe-core": "^4.13.0",
+    "eslint": "^10.11.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.12.0",
+    "jsdom": "^30.1.1",
+    "markdownlint-cli2": "^0.23.3",
+    "prettier": "^3.9.9",
+    "publint": "^0.3.24",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tsup": "^8.5.1",
+    "typescript": "~5.9",
+    "typescript-eslint": "^8.70.1",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
+  }
+}

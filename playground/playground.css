@@ -1,0 +1,116 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+main {
+  min-height: 100vh;
+  padding: 1.5rem;
+  color: #1c1917;
+  background: #fafaf9;
+}
+
+main.dark {
+  color: #f5f5f4;
+  background: #0c0a09;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+section {
+  margin-bottom: 2rem;
+}
+
+/* "Unstyled" demo: everything below is the app's own CSS. */
+.demo-root {
+  display: inline-block;
+  padding: 16px;
+  border-radius: 20px;
+  background: linear-gradient(160deg, #ecfeff, #f0f9ff);
+  color: #0c4a6e;
+  font-family: Georgia, serif;
+}
+
+.demo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.demo-nav {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: #0c4a6e;
+  color: white;
+  cursor: pointer;
+}
+
+.demo-nav:disabled {
+  opacity: 0.3;
+}
+
+.demo-select {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: bold;
+}
+
+.demo-weekday {
+  width: 40px;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.demo-day {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.demo-day:hover {
+  background: #bae6fd;
+}
+
+.demo-selected,
+.demo-selected:hover {
+  background: #0c4a6e;
+  color: white;
+}
+
+.demo-today {
+  box-shadow: inset 0 0 0 2px #0ea5e9;
+}
+
+.demo-dot {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: #f97316;
+}
+
+.note {
+  max-width: 36rem;
+  margin: 0.5rem 0;
+  color: #78716c;
+  font-size: 0.8125rem;
+}
