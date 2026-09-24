@@ -52,7 +52,7 @@
     "lint": "eslint . && markdownlint-cli2",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check:package": "publint --strict && attw --pack . --profile esm-only --exclude-entrypoints styles.css",
+    "check:package": "publint --strict && npm_config_dry_run=false attw --pack . --profile esm-only --exclude-entrypoints styles.css",
     "prepublishOnly": "bun run typecheck && bun run lint && bun run test && bun run build && bun run check:package"
   },
   "dependencies": {
