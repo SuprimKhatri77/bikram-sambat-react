@@ -4,3 +4,7 @@ coverage/
 *.tgz
 .DS_Store
 .playwright-mcp/
+
+# Local working notes (never committed)
+CLAUDE.local.md
+.claude/
