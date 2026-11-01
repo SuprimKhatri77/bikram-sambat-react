@@ -104,7 +104,10 @@ the input loses focus (not while typing). Clearing the text calls
 Typing is masked by default. The input takes only digits and shows them in
 the picker's `numerals`. Dashes appear as you type (`2084` becomes `2084-`),
 a separator you type yourself (`-`, `/`, `.` or a space) where a dash goes
-is ignored, and input stops at eight digits. Pasted or autofilled dates are
+is ignored, and input stops at eight digits. A separator typed after a
+one-digit month pads it (`2084-9-` becomes `2084-09-`), and a one-digit day
+is padded when the input loses focus, so typing `2084-9-9` and tabbing away
+commits `2084-09-09`. Pasted or autofilled dates are
 normalized, so `2084/9/9`, `2084.09.09` and `20840909` all become
 `2084-09-09`. Phones show a numeric keypad. Pass `mask={false}` for a plain
 free-text input.

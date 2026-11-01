@@ -8,6 +8,9 @@
   - dashes are added as you type, and never re-added while deleting
   - a typed separator where a dash goes is a no-op, and input stops at
     eight digits
+  - a separator typed after a one-digit month pads it (`2084-9-` becomes
+    `2084-09-`), and a one-digit day is padded on blur, then committed if
+    valid (`2084-9-9` becomes `2084-09-09`)
   - pasted or autofilled dates are normalized (`2084/9/9`, `2084.09.09` and
     `20840909` become `2084-09-09`)
   - the caret stays in place when you edit mid-string
