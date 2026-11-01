@@ -6,5 +6,13 @@
     "MD060": false,
   },
   "globs": ["**/*.md"],
-  "ignores": ["node_modules", "dist", "LICENSE", "coverage", ".playwright-mcp"],
+  "ignores": [
+    "node_modules",
+    "dist",
+    "LICENSE",
+    "coverage",
+    ".playwright-mcp",
+    ".claude",
+    "CLAUDE.local.md",
+  ],
 }
