@@ -37,6 +37,8 @@ jobs:
           fi
 
       - run: bun install --frozen-lockfile
+      # check:package lints the built package, so dist/ has to exist first.
+      - run: bun run build
       - run: bun run check:package
 
       # prepublishOnly re-runs typecheck/lint/test/build/check:package.
