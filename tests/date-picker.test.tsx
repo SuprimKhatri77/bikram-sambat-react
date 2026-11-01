@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { BSDate } from "bikram-sambat-ts";
 import { useState } from "react";
@@ -205,10 +205,17 @@ describe("typed input", () => {
     expect(onChange).toHaveBeenCalledWith({ year: 2083, month: 2, day: 31 });
   });
 
-  it("flags garbage on Enter", async () => {
-    const { user } = setup();
+  it("flags garbage on Enter (mask off)", async () => {
+    const { user } = setup({ mask: false });
     await user.type(input(), "hello{Enter}");
     expect(input().getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("never lets garbage in with the mask on", async () => {
+    const { user } = setup();
+    await user.type(input(), "hello{Enter}");
+    expect(input().value).toBe("");
+    expect(input().getAttribute("aria-invalid")).toBeNull();
   });
 
   it("accepts Devanagari digits", async () => {
@@ -339,5 +346,181 @@ describe("disabled and read-only", () => {
     const field = screen.getByLabelText("Date of birth");
     expect(field.getAttribute("placeholder")).toBe("वर्ष-महिना-गते");
     expect(screen.getByRole("button", { name: "मिति छान्नुहोस्" })).toBeTruthy();
+  });
+});
+
+describe("input mask", () => {
+  it("adds dashes as you type and commits once", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange });
+    expect(input().getAttribute("inputmode")).toBe("numeric");
+    expect(input().getAttribute("maxlength")).toBeNull();
+    await user.type(input(), "2084");
+    expect(input().value).toBe("2084-");
+    await user.type(input(), "09");
+    expect(input().value).toBe("2084-09-");
+    await user.type(input(), "09");
+    expect(input().value).toBe("2084-09-09");
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith({ year: 2084, month: 9, day: 9 });
+  });
+
+  it("accepts typed separators without doubling them", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange });
+    await user.type(input(), "2084-09/09");
+    expect(input().value).toBe("2084-09-09");
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it("caps at eight digits, never commits invalid text, and flags it on blur", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange });
+    await user.type(input(), "20843433434");
+    expect(input().value).toBe("2084-34-33");
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input().getAttribute("aria-invalid")).toBeNull();
+    await user.tab();
+    expect(input().getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("ignores digits typed into a full field, wherever the caret is", async () => {
+    const { user } = setup({ defaultValue: { year: 2084, month: 9, day: 9 } });
+    await user.type(input(), "1", { initialSelectionStart: 5, initialSelectionEnd: 5 });
+    expect(input().value).toBe("2084-09-09");
+    expect(input().selectionStart).toBe(5);
+  });
+
+  it("backspaces through the dashes without re-adding them", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange });
+    await user.type(input(), "20840909");
+    const steps = ["2084-09-0", "2084-09", "2084-0", "2084", "208", "20", "2", ""];
+    for (const expected of steps) {
+      await user.keyboard("{Backspace}");
+      expect(input().value).toBe(expected);
+    }
+    expect(onChange).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it("backspace just after a mid-string dash deletes the digit before it", async () => {
+    const { user } = setup({ defaultValue: { year: 2084, month: 9, day: 9 } });
+    await user.type(input(), "{Backspace}", { initialSelectionStart: 5, initialSelectionEnd: 5 });
+    expect(input().value).toBe("2080-90-9");
+    expect(input().selectionStart).toBe(3);
+  });
+
+  it("Delete just before a mid-string dash deletes the digit after it", async () => {
+    const { user } = setup({ defaultValue: { year: 2084, month: 9, day: 9 } });
+    await user.type(input(), "{Delete}", { initialSelectionStart: 4, initialSelectionEnd: 4 });
+    expect(input().value).toBe("2084-90-9");
+    expect(input().selectionStart).toBe(4);
+  });
+
+  it("keeps the caret when editing the month mid-string", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange, defaultValue: { year: 2084, month: 9, day: 9 } });
+    // Select the month and type a new one.
+    await user.type(input(), "1", { initialSelectionStart: 5, initialSelectionEnd: 7 });
+    expect(input().value).toBe("2084-10-9");
+    expect(input().selectionStart).toBe(6);
+    await user.keyboard("2");
+    expect(input().value).toBe("2084-12-09");
+    expect(input().selectionStart).toBe(8);
+    expect(onChange).toHaveBeenLastCalledWith({ year: 2084, month: 12, day: 9 });
+
+    // Replace the first month digit; the caret stays right after it.
+    await user.type(input(), "0", {
+      initialSelectionStart: 5,
+      initialSelectionEnd: 6,
+      skipClick: true,
+    });
+    expect(input().value).toBe("2084-02-09");
+    expect(input().selectionStart).toBe(6);
+  });
+
+  it.each([["2084/9/9"], ["2084.09.09"], ["2084 - 9 - 9"], ["20840909"], ["२०८४/९/९"]])(
+    "normalizes a pasted %j",
+    async (pasted) => {
+      const onChange = vi.fn();
+      const { user } = setup({ onChange });
+      await user.click(input());
+      await user.paste(pasted);
+      expect(input().value).toBe("2084-09-09");
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledWith({ year: 2084, month: 9, day: 9 });
+    },
+  );
+
+  it("shows typed digits in the picker's numerals", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange, numerals: "devanagari" });
+    await user.type(input(), "2");
+    expect(input().value).toBe("२");
+    await user.type(input(), "084");
+    expect(input().value).toBe("२०८४-");
+    await user.type(input(), "०९०९");
+    expect(input().value).toBe("२०८४-०९-०९");
+    expect(onChange).toHaveBeenCalledWith({ year: 2084, month: 9, day: 9 });
+  });
+
+  it("formats IME input on compositionend, not during composition", () => {
+    const onChange = vi.fn();
+    setup({ onChange });
+    input().focus();
+    fireEvent.compositionStart(input());
+    fireEvent.input(input(), { target: { value: "२०८४" }, isComposing: true });
+    expect(input().value).toBe("२०८४");
+    fireEvent.compositionEnd(input());
+    expect(input().value).toBe("2084-");
+    expect(input().selectionStart).toBe(5);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("with mask={false}, keeps free text and no numeric keypad", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange, mask: false });
+    expect(input().getAttribute("inputmode")).toBeNull();
+    await user.type(input(), "20843433434");
+    expect(input().value).toBe("20843433434");
+    await user.clear(input());
+    await user.type(input(), "2084");
+    expect(input().value).toBe("2084");
+    await user.type(input(), "-09-09");
+    expect(onChange).toHaveBeenCalledWith({ year: 2084, month: 9, day: 9 });
+  });
+
+  it("still clears with the clear button, then masks new typing", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange, clearable: true });
+    await user.type(input(), "20840909");
+    await user.click(screen.getByRole("button", { name: "Clear date" }));
+    expect(onChange).toHaveBeenLastCalledWith(undefined);
+    expect(input().value).toBe("");
+    expect(document.activeElement).toBe(input());
+    await user.keyboard("2083");
+    expect(input().value).toBe("2083-");
+  });
+
+  it("still follows external value changes", async () => {
+    const user = userEvent.setup();
+    function Controlled() {
+      const [date, setDate] = useState<BSDate>();
+      return (
+        <>
+          <NepaliDatePicker aria-label="Date" value={date} onChange={setDate} today={today} />
+          <button type="button" onClick={() => setDate({ year: 2081, month: 1, day: 1 })}>
+            set
+          </button>
+        </>
+      );
+    }
+    render(<Controlled />);
+    await user.type(input(), "2084-0");
+    expect(input().value).toBe("2084-0");
+    await user.click(screen.getByRole("button", { name: "set" }));
+    expect(input().value).toBe("2081-01-01");
+    await user.type(input(), "{Backspace}2");
+    expect(input().value).toBe("2081-01-02");
   });
 });

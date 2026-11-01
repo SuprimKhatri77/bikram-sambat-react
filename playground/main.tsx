@@ -32,6 +32,7 @@ function App() {
   const [locale, setLocale] = useState<CalendarLocale>("en");
   const [dark, setDark] = useState(false);
   const [gregorian, setGregorian] = useState(false);
+  const [mask, setMask] = useState(true);
   const [dayShape, setDayShape] = useState<DayShape>("circle");
   const [iconPosition, setIconPosition] = useState<"start" | "end" | "none">("end");
 
@@ -75,6 +76,9 @@ function App() {
             onChange={(e) => setGregorian(e.target.checked)}
           />{" "}
           Gregorian dates
+        </label>
+        <label>
+          <input type="checkbox" checked={mask} onChange={(e) => setMask(e.target.checked)} /> Mask
         </label>
       </div>
 
@@ -132,6 +136,7 @@ function App() {
           dayShape={dayShape}
           clearable
           iconPosition={iconPosition}
+          mask={mask}
           name="dob"
           maxDate={{ year: 2083, month: 6, day: 30 }}
         />
