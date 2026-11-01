@@ -26,7 +26,7 @@ import {
 import { useControllableState } from "../hooks/useControllableState";
 import { useIsomorphicLayoutEffect } from "../hooks/useIsomorphicLayoutEffect";
 import { LOCALES, defaultNumerals, toNumerals } from "../locale";
-import { applyMaskedEdit } from "../mask";
+import { applyMaskedEdit, padMaskedDay } from "../mask";
 import { dateKey, isDayDisabled, resolveBounds, validOrUndefined } from "../model";
 import type { CalendarLocale, DayShape, Numerals } from "../types";
 
@@ -320,8 +320,18 @@ export function NepaliDatePicker(props: NepaliDatePickerProps) {
   };
 
   const validateText = () => {
-    if (text.trim() === "") return;
-    const date = parseText(text);
+    let current = text;
+    if (mask) {
+      // Typing is over: pad a single-digit day ("2084-09-9") and commit it
+      // like a typed date if it's valid.
+      const padded = padMaskedDay(text, numerals);
+      if (padded !== text) {
+        current = padded;
+        updateText(padded);
+      }
+    }
+    if (current.trim() === "") return;
+    const date = parseText(current);
     if (date === undefined) setShowInvalid(true);
     else if (value !== undefined && isEqualBs(value, date)) setText(format(value));
   };

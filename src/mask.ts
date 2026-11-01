@@ -32,6 +32,7 @@ export interface MaskOptions {
 
 /** `YYYYMMDD`. */
 const MAX_DIGITS = 8;
+const YEAR_DIGITS = 4;
 /** Digit counts after which a dash goes: `YYYY-MM-DD`. */
 const DASH_AFTER = new Set([4, 6]);
 /** Characters people type between date parts. Typed at a dash, they're a no-op. */
@@ -53,6 +54,17 @@ const countDigits = (ascii: string): number => {
   let count = 0;
   for (const char of ascii) if (isDigit(char)) count++;
   return count;
+};
+
+/** Index of the digit with 0-based position `n` among the digits, or -1. */
+const nthDigitIndex = (ascii: string, n: number): number => {
+  let seen = 0;
+  for (let i = 0; i < ascii.length; i++) {
+    if (!isDigit(ascii[i])) continue;
+    if (seen === n) return i;
+    seen++;
+  }
+  return -1;
 };
 
 const clamp = (n: number, min: number, max: number): number => Math.min(Math.max(n, min), max);
@@ -134,6 +146,8 @@ export function formatMaskedInput(
  * - Once the text holds eight digits, an insert that doesn't replace any of
  *   them is ignored, wherever the caret is.
  * - An insert of text with no digits or separators (a letter) is ignored.
+ * - A separator typed right after a single month digit pads the month:
+ *   `2084-9` then `-` gives `2084-09-`. A lone `0` isn't padded.
  *
  * Ignored edits return `previous` with the caret where it was.
  */
@@ -174,6 +188,19 @@ export function applyMaskedEdit(
         countDigits(after) > MAX_DIGITS
       ) {
         return unchanged;
+      } else if (![...inserted].some(isDigit)) {
+        // A separator typed right after a single month digit ("2084-9" + "-")
+        // ends the month: pad it, so the result is "2084-09-".
+        const monthDigit = nthDigitIndex(after, YEAR_DIGITS);
+        if (
+          monthDigit !== -1 &&
+          monthDigit < at &&
+          countDigits(after) === YEAR_DIGITS + 1 &&
+          after[monthDigit] !== "0"
+        ) {
+          after = `${after.slice(0, monthDigit)}0${after.slice(monthDigit)}`;
+          at++;
+        }
       }
     }
 
@@ -196,4 +223,15 @@ export function applyMaskedEdit(
   }
 
   return formatMaskedInput(after, at, { numerals, deleting, paste });
+}
+
+/**
+ * Pads a single-digit day once typing is over (on blur): a complete year
+ * and month plus one day digit, `2084-09-9`, becomes `2084-09-09`, in
+ * `numerals`. Anything else is returned unchanged. While typing the day
+ * can't be padded, because `1` may still become `12`.
+ */
+export function padMaskedDay(text: string, numerals: Numerals): string {
+  const match = /^(\d{4}-\d{2}-)(\d)$/.exec(fromNepaliDigits(text));
+  return match ? toNumerals(`${match[1]}0${match[2]}`, numerals) : text;
 }

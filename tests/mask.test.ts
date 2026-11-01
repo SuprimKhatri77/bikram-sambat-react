@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyMaskedEdit, formatMaskedInput, type MaskOptions } from "../src/mask";
+import { applyMaskedEdit, formatMaskedInput, padMaskedDay, type MaskOptions } from "../src/mask";
 
 /**
  * Text with a `|` marking the caret (or `[...]` marking a selection, for
@@ -134,6 +134,20 @@ describe("applyMaskedEdit", () => {
     ["typed dash re-adds a deleted dash", "2084|", "2084-|", "insertText", "2084-|"],
     ["typed dash before a dash moves past it", "2084|-09", "2084-|-09", "insertText", "2084-|09-"],
     ["typed dash mid-group is dropped", "2084-0|", "2084-0-|", "insertText", "2084-0|"],
+    ["dash after one month digit pads it", "2084-9|", "2084-9-|", "insertText", "2084-09-|"],
+    ["slash after one month digit pads it", "2084-9|", "2084-9/|", "insertText", "2084-09-|"],
+    ["dot after one month digit pads it", "2084-1|", "2084-1.|", "insertText", "2084-01-|"],
+    ["space after one month digit pads it", "2084-9|", "2084-9 |", "insertText", "2084-09-|"],
+    ["Devanagari month padded", "२०८४-९|", "२०८४-९-|", "insertText", "२०८४-०९-|"],
+    ["then the day follows", "2084-09-|", "2084-09-9|", "insertText", "2084-09-9|"],
+    ["dash before a month digit doesn't pad", "2084-|9", "2084--|9", "insertText", "2084-|9"],
+    [
+      "dash after a two-digit month doesn't pad",
+      "2084-1|2",
+      "2084-1-|2",
+      "insertText",
+      "2084-1|2-",
+    ],
     ["a letter is ignored", "2084|", "2084a|", "insertText", "2084|"],
     ["a letter mid-string is ignored", "20|84-09", "20x|84-09", "insertText", "20|84-09"],
     ["a letter on an empty field", "|", "a|", "insertText", "|"],
@@ -269,5 +283,23 @@ describe("applyMaskedEdit", () => {
       text: "2084-5",
       caret: 0,
     });
+  });
+});
+
+describe("padMaskedDay", () => {
+  const cases: [text: string, numerals: "latin" | "devanagari", expected: string][] = [
+    ["2084-09-9", "latin", "2084-09-09"],
+    ["2084-13-1", "latin", "2084-13-01"],
+    ["२०८४-०९-९", "devanagari", "२०८४-०९-०९"],
+    ["2084-09-9", "devanagari", "२०८४-०९-०९"],
+    ["2084-09-19", "latin", "2084-09-19"],
+    ["2084-09-", "latin", "2084-09-"],
+    ["2084-09", "latin", "2084-09"],
+    ["2084-9", "latin", "2084-9"],
+    ["", "latin", ""],
+    ["hello", "latin", "hello"],
+  ];
+  it.each(cases)("%j (%s) -> %j", (text, numerals, expected) => {
+    expect(padMaskedDay(text, numerals)).toBe(expected);
   });
 });

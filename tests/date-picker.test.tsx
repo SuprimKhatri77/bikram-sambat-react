@@ -373,6 +373,58 @@ describe("input mask", () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
+  it("pads a one-digit month when a separator follows it", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange });
+    await user.type(input(), "2084-9-");
+    expect(input().value).toBe("2084-09-");
+    expect(input().selectionStart).toBe(8);
+    await user.type(input(), "9");
+    expect(input().value).toBe("2084-09-9");
+    expect(onChange).not.toHaveBeenCalled(); // "9" may still become "19"
+  });
+
+  it("pads a one-digit day on blur and commits it", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange });
+    await user.type(input(), "2084-9-9");
+    await user.tab();
+    expect(input().value).toBe("2084-09-09");
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith({ year: 2084, month: 9, day: 9 });
+    expect(input().getAttribute("aria-invalid")).toBeNull();
+  });
+
+  it("pads the day on blur in Devanagari too", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange, locale: "ne" });
+    await user.type(input(), "२०८४/९/९");
+    await user.tab();
+    expect(input().value).toBe("२०८४-०९-०९");
+    expect(onChange).toHaveBeenCalledWith({ year: 2084, month: 9, day: 9 });
+  });
+
+  it("pads the day on blur but still flags an invalid date", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange });
+    await user.type(input(), "2084-13-1");
+    expect(input().value).toBe("2084-13-1");
+    await user.tab();
+    expect(input().value).toBe("2084-13-01");
+    expect(input().getAttribute("aria-invalid")).toBe("true");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("pads the day on blur without committing a date the parent already has", async () => {
+    const onChange = vi.fn();
+    const { user } = setup({ onChange, defaultValue: { year: 2084, month: 9, day: 9 } });
+    await user.type(input(), "{Backspace}{Backspace}9", { initialSelectionStart: 10 });
+    expect(input().value).toBe("2084-09-9");
+    await user.tab();
+    expect(input().value).toBe("2084-09-09");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it("caps at eight digits, never commits invalid text, and flags it on blur", async () => {
     const onChange = vi.fn();
     const { user } = setup({ onChange });
@@ -488,6 +540,11 @@ describe("input mask", () => {
     expect(input().value).toBe("2084");
     await user.type(input(), "-09-09");
     expect(onChange).toHaveBeenCalledWith({ year: 2084, month: 9, day: 9 });
+    await user.clear(input());
+    await user.type(input(), "2084-9-9");
+    await user.tab();
+    expect(input().value).toBe("2084-9-9"); // no padding without the mask
+    expect(input().getAttribute("aria-invalid")).toBe("true");
   });
 
   it("still clears with the clear button, then masks new typing", async () => {
