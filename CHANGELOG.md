@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.0 - 2026-11-01
+
+- `NepaliDatePicker` masks typed input by default (new `mask` prop,
+  default `true`):
+  - only digits are accepted, Latin or Devanagari, and shown in `numerals`
+  - dashes are added as you type, and never re-added while deleting
+  - a typed separator where a dash goes is a no-op, and input stops at
+    eight digits
+  - pasted or autofilled dates are normalized (`2084/9/9`, `2084.09.09` and
+    `20840909` become `2084-09-09`)
+  - the caret stays in place when you edit mid-string
+  - IME composition is formatted when it ends
+  - the input sets `inputMode="numeric"`
+
+  **Behavior change:** the input no longer accepts free text. Pass
+  `mask={false}` to keep the 0.1 behavior. Commit semantics are unchanged: a
+  date is still committed only when the text is complete, valid and
+  selectable.
+
 ## 0.1.0 - 2026-09-24
 
 Initial release, built on bikram-sambat-ts 0.3.
