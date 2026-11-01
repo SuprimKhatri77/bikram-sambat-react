@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type CompositionEvent,
   type FocusEvent,
   type KeyboardEvent,
 } from "react";
@@ -25,6 +26,7 @@ import {
 import { useControllableState } from "../hooks/useControllableState";
 import { useIsomorphicLayoutEffect } from "../hooks/useIsomorphicLayoutEffect";
 import { LOCALES, defaultNumerals, toNumerals } from "../locale";
+import { applyMaskedEdit, padMaskedDay } from "../mask";
 import { dateKey, isDayDisabled, resolveBounds, validOrUndefined } from "../model";
 import type { CalendarLocale, DayShape, Numerals } from "../types";
 
@@ -61,6 +63,13 @@ export interface NepaliDatePickerProps {
   /** Shape of the calendar's day buttons (see `NepaliCalendar`). Default `"circle"`. */
   dayShape?: DayShape | undefined;
 
+  /**
+   * Guide typing into `YYYY-MM-DD`: only digits are accepted (shown in
+   * `numerals`), dashes are added as you type, input stops at eight digits,
+   * and pasted dates like `2084/9/9` are normalized. Mobile keyboards show a
+   * numeric keypad. Set `false` for a plain free-text input. Default `true`.
+   */
+  mask?: boolean | undefined;
   /** Input placeholder. Defaults to the locale's `YYYY-MM-DD` hint. */
   placeholder?: string | undefined;
   /** Show a button that clears the date. Default `false`. */
@@ -116,7 +125,8 @@ interface Placement {
 /**
  * A text input with a calendar popover for choosing a Bikram Sambat date.
  *
- * The input accepts `YYYY-MM-DD` in Latin or Devanagari digits; a date is
+ * The input takes `YYYY-MM-DD` in Latin or Devanagari digits, masked by
+ * default (digits only, dashes added as you type; see `mask`). A date is
  * only committed once it is complete, valid and selectable, so partial or
  * invalid text never produces a date. The popover opens from the calendar
  * button (or Alt+ArrowDown in the input), moves focus into the calendar,
@@ -137,6 +147,7 @@ export function NepaliDatePicker(props: NepaliDatePickerProps) {
     showGregorianDate = false,
     dayShape,
     placeholder,
+    mask = true,
     clearable = false,
     iconPosition = "end",
     disabled = false,
@@ -252,8 +263,7 @@ export function NepaliDatePicker(props: NepaliDatePickerProps) {
     }
   };
 
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const next = event.target.value;
+  const updateText = (next: string) => {
     setText(next);
     setShowInvalid(false);
     if (next.trim() === "") {
@@ -264,9 +274,64 @@ export function NepaliDatePicker(props: NepaliDatePickerProps) {
     if (date !== undefined && (value === undefined || !isEqualBs(value, date))) commit(date);
   };
 
+  // The text before an IME composition started, so the composed result is
+  // masked as one edit. `null` when not composing.
+  const compositionBaseRef = useRef<string | null>(null);
+
+  const applyMask = (input: HTMLInputElement, previous: string, inputType: string) => {
+    const edit = applyMaskedEdit(
+      previous,
+      input.value,
+      input.selectionStart ?? input.value.length,
+      inputType,
+      numerals,
+    );
+    // Write the masked text and caret to the DOM right away. React then finds
+    // the input already matching state and leaves the caret where we put it,
+    // even when the edit was ignored and state doesn't change.
+    if (input.value !== edit.text) input.value = edit.text;
+    // The input's own root, so this also works inside a shadow root.
+    if ((input.getRootNode() as Document | ShadowRoot).activeElement === input) {
+      input.setSelectionRange(edit.caret, edit.caret);
+    }
+    updateText(edit.text);
+  };
+
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const native = event.nativeEvent as Partial<InputEvent>;
+    if (!mask) {
+      updateText(event.target.value);
+    } else if (native.isComposing === true || compositionBaseRef.current !== null) {
+      // Leave IME composition alone; it's masked on compositionend.
+      setText(event.target.value);
+    } else {
+      applyMask(event.target, text, native.inputType ?? "");
+    }
+  };
+
+  const handleCompositionStart = () => {
+    if (mask) compositionBaseRef.current = text;
+  };
+
+  const handleCompositionEnd = (event: CompositionEvent<HTMLInputElement>) => {
+    const base = compositionBaseRef.current;
+    compositionBaseRef.current = null;
+    if (mask && base !== null) applyMask(event.currentTarget, base, "insertCompositionText");
+  };
+
   const validateText = () => {
-    if (text.trim() === "") return;
-    const date = parseText(text);
+    let current = text;
+    if (mask) {
+      // Typing is over: pad a single-digit day ("2084-09-9") and commit it
+      // like a typed date if it's valid.
+      const padded = padMaskedDay(text, numerals);
+      if (padded !== text) {
+        current = padded;
+        updateText(padded);
+      }
+    }
+    if (current.trim() === "") return;
+    const date = parseText(current);
     if (date === undefined) setShowInvalid(true);
     else if (value !== undefined && isEqualBs(value, date)) setText(format(value));
   };
@@ -368,6 +433,7 @@ export function NepaliDatePicker(props: NepaliDatePickerProps) {
           placeholder={placeholder ?? strings.placeholder}
           autoComplete="off"
           spellCheck={false}
+          inputMode={mask ? "numeric" : undefined}
           disabled={disabled}
           readOnly={readOnly}
           required={required}
@@ -382,6 +448,8 @@ export function NepaliDatePicker(props: NepaliDatePickerProps) {
             "aria-controls": open ? popoverId : undefined,
           })}
           onChange={handleInputChange}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
           onClick={handleInputClick}
           onBlur={handleInputBlur}
           onKeyDown={handleInputKeyDown}
