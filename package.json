@@ -1,6 +1,6 @@
 {
   "name": "bikram-sambat-react",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Accessible React components for selecting and displaying Bikram Sambat (Nepali calendar) dates, built on bikram-sambat-ts.",
   "keywords": [
     "bikram-sambat",
